@@ -2,6 +2,7 @@
 #'
 #' Functions for the alternative filtering approach
 library("phyloRNA")
+library("Hmisc")
 
 
 column_density = function(x, empty, sort=TRUE){
@@ -149,6 +150,7 @@ density_filtering = function(
         filtered = phyloRNA::densest_subset(x, empty=empty, density=density[i])$result
         if(!is.null(replace))
             filtered = replace_missing(filtered, empty, replace)
+            filtered = rename_characters(filtered)
         filtered = phyloRNA::remove_constant(filtered, margin=1, unknown=empty)
         write_table(filtered, outfile[i])
         }
@@ -174,6 +176,33 @@ replace_missing = function(data, missing, replace){
 
     data
     }
+
+
+rename_characters = function(data) {
+    values <- unique(unlist(data))
+    values <- values[values!="0"]
+    if (all.is.numeric(values, what="test")) {
+        num_values=sort(all.is.numeric(values, what="vector"))
+        max=length(num_values)
+        if (max<10) {
+            alphabet=c("A", "B", "C", "D", "E", "F", "G", "H", "I")
+            if(!setequal(num_values,1:max))
+                for (i in 1:max)
+                    data[data==as.character(num_values[i])]=alphabet[i]
+                for (i in 1:max)
+                    data[data==alphabet[i]]=as.character(i)
+            data
+            } else {
+            warning("WARNING: Matrix contains more than 10 states. Can not rename states in this case. Continue without renaming.")
+            data
+            }
+        } else {
+        warning("WARNING: Can not rename characters as not all are numberic. Continue without renaming.")
+        print(values)
+        data
+        }
+    }
+
 
 
 #' Filtering by selecting the best cells
